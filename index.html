@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ian Bauters</title>
+<meta name="description" content="I fix what bothers me, then share it with whoever has the same problem. Six issues, all closed.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#1a1a1a;--paper:#fbf8f2;--mono:"JetBrains Mono",ui-monospace,monospace;--open:#d9483b;--closed:#2f9e57}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Bricolage Grotesque",-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  body{background-image:linear-gradient(#ece6da 1px,transparent 1px),linear-gradient(90deg,#ece6da 1px,transparent 1px);background-size:32px 32px;background-position:-1px -1px}
+
+  header{position:fixed;inset:0 0 auto 0;display:flex;justify-content:space-between;align-items:center;padding:22px 28px;z-index:50;pointer-events:none}
+  header>*{pointer-events:auto}
+  .logo{font-family:var(--mono);font-size:13px;font-weight:600;background:var(--paper);padding:4px 8px;border:1.5px solid var(--ink);border-radius:6px}
+  .hi{font-family:var(--mono);font-size:13px;text-decoration:none;color:var(--ink);border:1.5px solid var(--ink);padding:6px 14px;border-radius:999px;background:var(--paper);box-shadow:2px 2px 0 var(--ink);transition:transform .15s,box-shadow .15s}
+  .hi:hover{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink)}
+
+  .stage{position:relative;min-height:max(100vh,860px);overflow:hidden}
+  .intro{position:absolute;left:6vw;top:16vh;max-width:620px;pointer-events:none;z-index:1}
+  .intro h1{font-size:clamp(44px,6.2vw,92px);font-weight:700;line-height:.95;letter-spacing:-.035em}
+  .intro h1 s{text-decoration-thickness:.08em;text-decoration-color:var(--open)}
+  .intro p{font-size:clamp(18px,1.8vw,22px);font-weight:500;color:#555;margin-top:18px;max-width:30ch}
+  .meta{font-family:var(--mono);font-size:12px;color:#777;margin-top:22px;display:flex;gap:16px;flex-wrap:wrap}
+  .meta b{color:var(--ink)}
+  .meta .count{display:inline-flex;align-items:center;gap:6px}
+  .meta .count::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--closed)}
+
+  /* tickets */
+  .ticket{position:absolute;width:290px;background:#fff;border:1.5px solid var(--ink);border-radius:14px;box-shadow:3px 3px 0 var(--ink);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;transition:box-shadow .18s,background .25s;z-index:2}
+  .ticket.drag{cursor:grabbing;box-shadow:9px 9px 0 var(--ink);transition:background .25s}
+  .t-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;padding:11px 14px;border-bottom:1.5px dashed #cfc7b8}
+  .state{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--open)}
+  .state::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+  .t-body{padding:16px 14px 14px;position:relative}
+  .problem{font-size:21px;font-weight:600;line-height:1.2;letter-spacing:-.01em;background:linear-gradient(var(--open),var(--open)) 0 58%/0 2px no-repeat;transition:background-size .4s ease,color .3s}
+  .t-foot{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:#888;padding:0 14px 12px}
+  .fixed{position:absolute;right:12px;bottom:-14px;font-family:var(--mono);font-size:12px;font-weight:600;padding:6px 10px;border:1.5px solid var(--ink);border-radius:8px;background:var(--c);transform:rotate(-6deg) scale(.6);opacity:0;transition:all .3s cubic-bezier(.3,1.6,.5,1);white-space:nowrap}
+  .fixed span{font-family:"Bricolage Grotesque",sans-serif;font-size:17px;font-weight:700;margin-left:4px}
+
+  .ticket.solved{background:var(--c)}
+  .ticket.solved .state{color:var(--closed)}
+  .ticket.solved .problem{background-size:100% 2px;color:#666}
+  .ticket.solved .fixed{opacity:1;transform:rotate(-6deg) scale(1)}
+
+  .hint{position:absolute;right:28px;bottom:26px;font-family:var(--mono);font-size:12px;color:#888;z-index:1}
+  footer{position:relative;border-top:1.5px solid var(--ink);padding:22px 28px 32px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;background:var(--paper)}
+  footer a{color:var(--ink);margin-left:16px}
+
+  /* detail panel */
+  html:has(dialog[open]){overflow:hidden}
+  body.lock{overflow:hidden}
+  dialog{border:1.5px solid var(--ink);border-radius:24px;box-shadow:6px 6px 0 var(--ink);padding:0;max-width:640px;width:calc(100% - 32px);color:var(--ink);background:var(--paper);margin:auto;overscroll-behavior:contain;max-height:calc(100dvh - 32px);overflow-y:auto}
+  dialog::backdrop{background:rgba(26,26,26,.35);backdrop-filter:blur(3px)}
+  dialog[open]{animation:pop .22s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+  .d-top{padding:28px 30px 24px;position:relative;border-bottom:1.5px solid var(--ink)}
+  .d-ref{font-family:var(--mono);font-size:12px;margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .d-ref s{color:#777}
+  .d-ref b{color:var(--closed)}
+  .d-top h3{font-size:clamp(32px,5vw,44px);font-weight:700;letter-spacing:-.025em;line-height:1}
+  .d-top .lede{font-size:19px;font-weight:500;margin-top:10px;opacity:.85}
+  .close{position:absolute;top:18px;right:18px;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--ink);background:#fff;font:inherit;font-size:20px;line-height:1;cursor:pointer}
+  .close:hover{background:var(--ink);color:#fff}
+  .d-body{padding:24px 30px 30px}
+  .d-body p{font-size:17px;line-height:1.55;margin-bottom:12px;color:#333}
+  .status{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;border:1.5px solid var(--ink);margin:6px 0 18px;background:#fff}
+  .status::before{content:"";width:8px;height:8px;border-radius:50%;background:#3fae5a}
+  .status.dev::before{background:#e0a23a}
+  dl{border-top:1px solid #ddd5c6;margin-bottom:22px}
+  dl div{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid #ddd5c6;font-size:15px}
+  dt{font-weight:600;opacity:.6;white-space:nowrap}
+  dd{text-align:right}
+  .actions{display:flex;flex-wrap:wrap;gap:10px}
+  .btn{display:inline-block;text-decoration:none;color:var(--ink);font-weight:600;padding:11px 20px;border-radius:999px;border:1.5px solid var(--ink);box-shadow:2px 2px 0 var(--ink);transition:transform .15s,box-shadow .15s;background:#fff}
+  .btn.go{background:var(--ink);color:var(--paper)}
+  .btn:hover{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink)}
+
+  .esentia{--c:#dcefd3}.curebook{--c:#d6e8fb}.dkk{--c:#f8d4cf}.hush{--c:#e6defa}.captionist{--c:#fbecbf}.thingiverse{--c:#d3f0ed}
+  .d-top.esentia,.d-top.curebook,.d-top.dkk,.d-top.hush,.d-top.captionist,.d-top.thingiverse{background:var(--c)}
+
+  @media (max-width:820px){
+    .stage{min-height:auto;padding:110px 20px 40px;display:flex;flex-direction:column;gap:30px}
+    .intro{position:static;margin-bottom:10px}
+    .ticket{position:relative;width:100%;left:auto!important;top:auto!important;transform:none!important;cursor:pointer;touch-action:auto}
+    .hint{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#e6edf3;--paper:#0d1117;--open:#3fb950;--closed:#a371f7}
+  .esentia{--a:#7ee787}.curebook{--a:#79c0ff}.dkk{--a:#ff7b72}.hush{--a:#d2a8ff}.captionist{--a:#e3b341}.thingiverse{--a:#56d4dd}
+  html,body{background:#0d1117;color:#e6edf3;font-family:var(--mono)}
+  body{background-image:radial-gradient(#21262d 1px,transparent 1px);background-size:22px 22px}
+  .logo,.hi{background:#161b22;border-color:#30363d;color:#e6edf3;box-shadow:none;border-radius:6px}
+  .hi:hover{background:#238636;border-color:#2ea043;transform:none}
+  .intro h1{font-family:var(--mono);font-weight:800;letter-spacing:-.05em;font-size:clamp(38px,5.2vw,78px)}
+  .intro h1::before{content:"$ ";color:#3fb950}
+  .intro h1 s{text-decoration-color:#f85149}
+  .intro p{font-family:var(--mono);color:#8b949e;font-size:16px}
+  .meta{color:#8b949e}.meta b{color:#e6edf3}.meta .count::before{background:#a371f7}
+  .ticket{background:#161b22;border:1px solid #30363d;border-radius:6px;box-shadow:0 8px 24px rgba(1,4,9,.6);width:300px}
+  .ticket.drag{box-shadow:0 16px 40px rgba(1,4,9,.9);border-color:#8b949e}
+  .t-head{border-bottom:1px solid #30363d;color:#8b949e;background:#0d1117;border-radius:6px 6px 0 0}
+  .state{color:#3fb950}.state::before{border-radius:50%;box-shadow:0 0 8px currentColor}
+  .problem{font-family:var(--mono);font-size:16px;font-weight:600;line-height:1.45;color:#e6edf3;background:linear-gradient(#f85149,#f85149) 0 55%/0 1px no-repeat}
+  .t-foot{color:#6e7681}
+  .fixed{background:transparent;color:var(--a);border:1px solid var(--a);border-radius:999px;font-size:11px;transform:none;bottom:12px;right:14px;opacity:0;padding:3px 10px;box-shadow:0 0 12px color-mix(in srgb,var(--a) 40%,transparent)}
+  .fixed span{font-family:var(--mono);font-size:12px}
+  .ticket.solved{background:#161b22;border-color:var(--a);box-shadow:0 0 0 1px var(--a),0 8px 30px color-mix(in srgb,var(--a) 22%,transparent)}
+  .ticket.solved .state{color:#a371f7}
+  .ticket.solved .problem{color:#6e7681}
+  .ticket.solved .fixed{transform:none}
+  .ticket.solved .t-foot span:first-child{visibility:hidden}
+  .hint{color:#6e7681}
+  footer{background:#0d1117;border-top:1px solid #30363d;color:#8b949e}footer a{color:#e6edf3}
+  dialog{background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+  dialog::backdrop{background:rgba(1,4,9,.7)}
+  .d-top{border-bottom:1px solid #30363d}
+  .d-top.esentia,.d-top.curebook,.d-top.dkk,.d-top.hush,.d-top.captionist,.d-top.thingiverse{background:#161b22;border-top:3px solid var(--a)}
+  .d-top h3{font-family:var(--mono);color:var(--a)}
+  .d-ref b{color:#a371f7}
+  .close{background:#21262d;border-color:#30363d;color:#e6edf3;border-radius:6px}
+  .d-body p{color:#c9d1d9;font-family:-apple-system,"Segoe UI",sans-serif}
+  .d-top .lede{font-family:-apple-system,"Segoe UI",sans-serif}
+  .status{background:#161b22;border-color:#30363d;font-family:var(--mono)}
+  dl,dl div{border-color:#30363d}
+  .btn{background:#21262d;color:#e6edf3;border-color:#30363d;box-shadow:none;border-radius:6px;font-family:var(--mono)}
+  .btn.go{background:#238636;border-color:#2ea043;color:#fff}
+  .btn:hover{transform:none;filter:brightness(1.15)}
+</style>
+
+<style>
+  /* readability pass */
+  .ticket{width:310px}
+  .t-body{padding:16px 16px 14px}
+  .problem{font-size:16.5px;line-height:1.5;color:#f0f6fc;background:linear-gradient(rgba(248,81,73,.75),rgba(248,81,73,.75)) 0 56%/0 1.5px no-repeat}
+  .problem{background:none!important}
+  .ticket.solved .problem{color:#b1bac4;text-decoration:line-through;text-decoration-color:rgba(248,81,73,.8);text-decoration-thickness:1.5px}
+  .fixed{position:static;display:inline-flex;align-items:center;gap:6px;margin-top:12px;opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s;box-shadow:none;background:color-mix(in srgb,var(--a) 12%,transparent)}
+  .fixed span{margin-left:0}
+  .ticket.solved .fixed{opacity:1;transform:none}
+  .ticket.solved .t-foot span:first-child{visibility:visible}
+  .t-foot{color:#8b949e;padding:0 16px 12px}
+  .t-head{color:#8b949e}
+  .meta,.hint,.intro p{color:#a3acb7}
+  .ticket.peek{border-color:var(--a);box-shadow:0 0 0 1px var(--a),0 8px 30px color-mix(in srgb,var(--a) 22%,transparent)}
+  .ticket.peek .fixed{opacity:1;transform:none}
+  .t-foot .tag{border:1px solid #30363d;border-radius:999px;padding:1px 8px;color:#a3acb7}
+</style>
+</head>
+<body>
+<header><span class="logo">ianbauters / issues</span><a class="hi" href="mailto:hello@ianbauters.be">Report a bug →</a></header>
+
+<main class="stage" id="stage">
+  <div class="intro">
+    <h1>I fix what <s>bothers</s> me.</h1>
+    <p>Then I share it with whoever has the same problem.</p>
+    <div class="meta"><span class="count"><b id="closed">0</b>/6&nbsp;closed</span><span id="todo">click a ticket to close it</span><span>Kortrijk, BE</span></div>
+  </div>
+  <div class="hint">↖ drag the tickets · click one to read the fix</div>
+</main>
+
+<footer><span>© <span id="y">2026</span> Ian Bauters</span><span><a href="https://github.com/IanBauters">GitHub</a><a href="mailto:hello@ianbauters.be">Email</a></span></footer>
+
+<dialog id="panel" aria-labelledby="d-title">
+  <div class="d-top" id="d-top">
+    <button class="close" aria-label="Close">×</button>
+    <div class="d-ref" id="d-ref"></div>
+    <h3 id="d-title"></h3>
+    <p class="lede" id="d-lede"></p>
+  </div>
+  <div class="d-body">
+    <span class="status" id="d-status"></span>
+    <div id="d-text"></div>
+    <dl id="d-facts"></dl>
+    <div class="actions" id="d-actions"></div>
+  </div>
+</dialog>
+
+<script>
+const P = {
+  esentia:{emoji:"🧼",title:"Esentia",cls:"esentia",
+    lede:"Honest soap, made in small batches and cured for four weeks.",
+    status:"Webshop opens 30 November 2026, 19:00",
+    text:["Plant-based oils, almost always organic, fairtrade where possible and never palm oil. Every essential oil is named on the label — no hiding behind “parfum”.",
+          "Each bar carries its production date as a batch number, so you can look up exactly what went into it. Free delivery by bike in Kortrijk, by envelope across the EU."],
+    facts:[["Range","The Honest One, The Quiet One, The Wanderer, The Stranger + seasonal editions"],["Languages","Nederlands · Français · English"]],
+    links:[["Visit esentia.be","https://esentia.be"],["Instagram","https://instagram.com/esentia.belgium"]]},
+  curebook:{emoji:"📒",title:"Curebook",cls:"curebook",
+    lede:"The compliance back office I built for Esentia, made available to every EU soap maker.",
+    status:"In development", dev:true,
+    text:["Making soap is the fun part. Keeping raw-material lots, recipes, batch records, product files and recall traces in order is not. Curebook puts it all in one place, inside the WordPress site you already have.",
+          "The core is free. Curebook Pro adds product information files for €9.99 a year, so every small maker can afford it. If you stop, you can still export everything you made."],
+    facts:[["Covers","Lots, recipes, batch records, PIF, complaints, recall"],["Price","Free · Pro €9.99/year"],["Extra","Packaging generator for soap boxes"]],
+    links:[]},
+  dkk:{emoji:"🎞️",title:"De Donkere Kamer",cls:"dkk",
+    lede:"A public darkroom in the basement of Blut Art Gallery, in the centre of Kortrijk.",
+    status:"Open every other Friday, 18:00–22:00",
+    text:["Two black-and-white enlargers and a cyanotype enlarger I built myself, with the chemistry ready when you arrive. Bring your negatives and paper; everything else is included.",
+          "Induction workshops in black-and-white and cyanotype start in 2027. Private workshops are possible on request."],
+    facts:[["Session","€20, chemistry included"],["Workshops","From 2027 · one Sunday a month · €35"],["Where","Blut Art Gallery, Kortrijk"]],
+    links:[["Book a session","https://dedonkerekamer.be"],["Instagram","https://instagram.com/dedonkerekamer.be"]]},
+  hush:{emoji:"🎧",title:"Hush",cls:"hush",
+    lede:"A calm, native player for your own Navidrome music library.",
+    status:"In development", dev:true,
+    text:["Written in Swift for the Mac, with an Android version that also works in the car. AirPlay is built in, and live radio sits right in the sidebar.",
+          "Smart Shuffle knows film scores should never be shuffled and that the children’s songs don’t belong in your mix. Hush can even wake the house with the radio on the kitchen speaker, started from your phone."],
+    facts:[["Platforms","macOS · Android · Android Auto"],["Works with","Navidrome"],["Highlights","Smart Shuffle, AirPlay, wake-up radio"]],
+    links:[]},
+  captionist:{emoji:"💬",title:"Captionist",cls:"captionist",
+    lede:"Turn Blu-ray subtitles inside your MKV files into clean, editable SRTs.",
+    status:"Public beta", dev:true,
+    text:["When MKVTools stopped being developed, I built its successor — with the original developer’s blessing. Drop in an MKV, pick the subtitle tracks you want, and Captionist reads them into SRT files.",
+          "It can clean up subtitles and translate them with AI, so a German series can come out in British English. One payment, no subscription, and the licence keeps working offline."],
+    facts:[["Does","PGS extraction, OCR to SRT, clean-up, translation"],["Price","About a Big Mac, once"],["Requires","macOS"]],
+    links:[["Visit captionist.ianbauters.be","https://captionist.ianbauters.be"]]},
+  thingiverse:{emoji:"🖨️",title:"Thingiverse",cls:"thingiverse",
+    lede:"Things I designed for my own problems, free for you to print.",
+    status:"Free to download",
+    text:["When something in the house, the garden or my workshop is missing a part, I design and print one. If it worked for me, it goes on Thingiverse so anyone with a 3D printer can make their own."],
+    facts:[["Price","Free"],["Format","Ready-to-print files"]],
+    links:[["See my designs","https://www.thingiverse.com/IanBauters/designs"]]}
+};
+
+const BUGS = {
+  esentia:    {tag:"transparency", n:"001", bug:"Soap labels hide what’s inside behind the word “parfum”.", pos:[56,16,-3]},
+  curebook:   {tag:"paperwork", n:"002", bug:"EU soap rules bury small makers in paperwork.", pos:[80,34,4]},
+  dkk:        {tag:"missing in town", n:"003", bug:"Nowhere in Kortrijk to print your own film photos.", pos:[17,70,2]},
+  hush:       {tag:"annoyance", n:"004", bug:"Shuffle keeps playing film scores and the kids’ songs.", pos:[41,62,-4]},
+  captionist: {tag:"discontinued", n:"005", bug:"MKVTools stopped being developed.", pos:[62,80,3]},
+  thingiverse:{tag:"missing part", n:"006", bug:"The part I need doesn’t exist.", pos:[85,63,-2]}
+};
+
+const stage = document.getElementById('stage');
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mobile = () => matchMedia('(max-width:820px)').matches;
+let z = 10;
+if (matchMedia('(hover: none)').matches) document.getElementById('todo').textContent = 'tap a ticket to close it';
+function tally(){ const n = document.querySelectorAll('.ticket.solved').length; $('closed').textContent = n; $('todo').textContent = n === 6 ? 'all fixed ✓ — that’s how I like it' : (6-n) + ' still open'; }
+
+Object.entries(BUGS).forEach(([key, b]) => {
+  const p = P[key];
+  const t = document.createElement('div');
+  t.className = 'ticket ' + p.cls;
+  t.tabIndex = 0;
+  t.setAttribute('role', 'button');
+  t.setAttribute('aria-label', `Issue ${b.n}: ${b.bug} Fixed by ${p.title}. Open details.`);
+  t.innerHTML = `
+    <div class="t-head"><span>#${b.n}</span><span class="state">OPEN</span></div>
+    <div class="t-body"><div class="problem">${esc(b.bug)}</div><div class="fixed">FIXED →<span>${esc(p.title)}</span></div></div>
+    <div class="t-foot"><span class="tag">${esc(b.tag)}</span><span>assigned to Ian</span></div>`;
+  t.style.left = b.pos[0] + '%';
+  t.style.top = b.pos[1] + '%';
+  t.style.transform = `translate(-50%,-50%) rotate(${(b.pos[2]*0.3).toFixed(1)}deg)`;
+  stage.appendChild(t);
+
+  const state = t.querySelector('.state');
+  const solve = () => { if (t.classList.contains('solved')) return; t.classList.add('solved'); state.textContent = 'CLOSED'; tally(); };
+  const peek = on => t.classList.toggle('peek', on);
+  t.addEventListener('pointerenter', () => peek(true));
+  t.addEventListener('pointerleave', () => { if (!t.classList.contains('drag')) peek(false); });
+  t.addEventListener('focus', () => peek(true));
+  t.addEventListener('blur', () => peek(false));
+  t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); solve(); open(key); } });
+
+  // drag vs click
+  let sx, sy, ox, oy, moved = false, down = false;
+  t.addEventListener('pointerdown', e => {
+    if (mobile()) return;
+    down = true; moved = false; sx = e.clientX; sy = e.clientY;
+    const r = stage.getBoundingClientRect();
+    ox = t.offsetLeft; oy = t.offsetTop;
+    t.setPointerCapture(e.pointerId);
+    t.style.zIndex = ++z;
+  });
+  t.addEventListener('pointermove', e => {
+    if (!down) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (!moved && Math.hypot(dx, dy) < 5) return;
+    moved = true; t.classList.add('drag');
+    const tilt = Math.max(-3, Math.min(3, dx / 60));
+    t.style.left = (ox + dx) + 'px';
+    t.style.top = (oy + dy) + 'px';
+    t.style.transform = `translate(-50%,-50%) rotate(${tilt}deg) scale(1.03)`;
+  });
+  t.addEventListener('pointerup', e => {
+    if (!down) return;
+    down = false;
+    t.classList.remove('drag');
+    if (moved) {
+      t.style.transform = `translate(-50%,-50%) rotate(${(Math.random()*2-1).toFixed(1)}deg)`;
+      if (!t.matches(':hover')) peek(false);
+    } else { solve(); open(key); }
+  });
+  if (mobile()) t.addEventListener('click', () => { solve(); open(key); });
+});
+
+const dlg = $('panel');
+function open(key){
+  const p = P[key], b = BUGS[key];
+  $('d-top').className = 'd-top ' + p.cls;
+  $('d-ref').innerHTML = `<span>#${b.n}</span><s>${esc(b.bug)}</s><b>● closed</b>`;
+  $('d-title').textContent = p.title;
+  $('d-lede').textContent = p.lede;
+  const st = $('d-status'); st.textContent = p.status; st.className = 'status' + (p.dev ? ' dev' : '');
+  $('d-text').innerHTML = p.text.map(t => `<p>${esc(t)}</p>`).join('');
+  $('d-facts').innerHTML = p.facts.map(([k,v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+  $('d-actions').innerHTML = p.links.map(([l,u],i) => `<a class="btn${i===0?' go':''}" href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join('');
+  document.body.classList.add('lock');
+  dlg.showModal();
+}
+dlg.addEventListener('close', () => document.body.classList.remove('lock'));
+dlg.querySelector('.close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+$('y').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
