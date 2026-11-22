@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ian Bauters</title>
-<meta name="description" content="I fix what bothers me, then share it with whoever has the same problem. Six issues, all closed.">
+<meta name="description" content="I fix what bothers me, then share it with whoever has the same problem. Five issues, all closed.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -161,7 +161,7 @@
   <div class="intro">
     <h1>I fix what <s>bothers</s> me.</h1>
     <p>Then I share it with whoever has the same problem.</p>
-    <div class="meta"><span class="count"><b id="closed">0</b>/6&nbsp;closed</span><span id="todo">click a ticket to close it</span><span>Kortrijk, BE</span></div>
+    <div class="meta"><span class="count"><b id="closed">0</b>/<span id="total">5</span>&nbsp;closed</span><span id="todo">click a ticket to close it</span><span>Kortrijk, BE</span></div>
   </div>
   <div class="hint">↖ drag the tickets · click one to read the fix</div>
 </main>
@@ -206,13 +206,6 @@ const P = {
           "Induction workshops in black-and-white and cyanotype start in 2027. Private workshops are possible on request."],
     facts:[["Session","€20, chemistry included"],["Workshops","From 2027 · one Sunday a month · €35"],["Where","Blut Art Gallery, Kortrijk"]],
     links:[["Book a session","https://dedonkerekamer.be"],["Instagram","https://instagram.com/dedonkerekamer.be"]]},
-  hush:{emoji:"🎧",title:"Hush",cls:"hush",
-    lede:"A calm, native player for your own Navidrome music library.",
-    status:"In development", dev:true,
-    text:["Written in Swift for the Mac, with an Android version that also works in the car. AirPlay is built in, and live radio sits right in the sidebar.",
-          "Smart Shuffle knows film scores should never be shuffled and that the children’s songs don’t belong in your mix. Hush can even wake the house with the radio on the kitchen speaker, started from your phone."],
-    facts:[["Platforms","macOS · Android · Android Auto"],["Works with","Navidrome"],["Highlights","Smart Shuffle, AirPlay, wake-up radio"]],
-    links:[]},
   captionist:{emoji:"💬",title:"Captionist",cls:"captionist",
     lede:"Get clean, editable subtitles out of your movie files, even when there aren’t any.",
     status:"Public beta", dev:true,
@@ -233,9 +226,8 @@ const BUGS = {
   esentia:    {tag:"transparency", n:"001", bug:"Soap labels hide what’s inside behind the word “parfum”.", pos:[56,16,-3]},
   curebook:   {tag:"paperwork", n:"002", bug:"EU soap rules bury small makers in paperwork.", pos:[80,34,4]},
   dkk:        {tag:"missing in town", n:"003", bug:"Nowhere in Kortrijk to print your own film photos.", pos:[17,70,2]},
-  hush:       {tag:"annoyance", n:"004", bug:"Shuffle keeps playing film scores and the kids’ songs.", pos:[41,62,-4]},
-  captionist: {tag:"no easy way", n:"005", bug:"No easy way to rip subtitles from a movie file on a Mac.", pos:[62,80,3]},
-  thingiverse:{tag:"missing part", n:"006", bug:"The part I need doesn’t exist.", pos:[85,63,-2]}
+  captionist: {tag:"no easy way", n:"004", bug:"No easy way to rip subtitles from a movie file on a Mac.", pos:[45,72,3]},
+  thingiverse:{tag:"missing part", n:"005", bug:"The part I need doesn’t exist.", pos:[85,63,-2]}
 };
 
 const stage = document.getElementById('stage');
@@ -244,7 +236,8 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
 const mobile = () => matchMedia('(max-width:820px)').matches;
 let z = 10;
 if (matchMedia('(hover: none)').matches) document.getElementById('todo').textContent = 'tap a ticket to close it';
-function tally(){ const n = document.querySelectorAll('.ticket.solved').length; $('closed').textContent = n; $('todo').textContent = n === 6 ? 'all fixed ✓ — that’s how I like it' : (6-n) + ' still open'; }
+const T = Object.keys(BUGS).length;
+function tally(){ const n = document.querySelectorAll('.ticket.solved').length; $('closed').textContent = n; $('todo').textContent = n === T ? 'all fixed ✓ — that’s how I like it' : (T-n) + ' still open'; }
 
 Object.entries(BUGS).forEach(([key, b]) => {
   const p = P[key];
